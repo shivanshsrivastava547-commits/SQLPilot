@@ -132,8 +132,8 @@ The LLM should decide what information it needs, which tool to use, whether more
 Update this section whenever the active implementation phase changes.
 
 ```text
-Current Phase: Phase 0 — Project Foundation
-Status: READY TO PLAN
+Current Phase: Phase 6 — Clarification / Human-in-the-Loop
+Status: COMPLETED
 Started: 2026-10-02
 Last Updated: 2026-10-02
 ```
@@ -141,9 +141,9 @@ Last Updated: 2026-10-02
 ### Current Phase Notes
 
 ```text
-The project has complete authoritative documentation (PRD.md, architecture.md, rules.md, phase.md, design.md, memory.md).
-GSD has been initialized (.planning/PROJECT.md, REQUIREMENTS.md, ROADMAP.md, STATE.md, config.json).
-Phase 0 focuses on project foundation: creating project structure, dependencies in requirements.txt, config.py, app.py entry point, and pytest setup.
+The project now includes a clarification flow for ambiguous questions such as “best customers”.
+When the user’s intent is underspecified, the agent pauses, asks a concrete question with options, and resumes the analysis after the user selects a definition.
+This flow is validated by regression tests and a successful app launch on a free Streamlit port.
 ```
 
 ---
@@ -155,20 +155,133 @@ Maintain a concise record of completed phases.
 Format:
 
 ```text
-## Phase X — Name
+## Phase 0 — Project Foundation
 
 Status: COMPLETED
 
 Completed:
-- ...
-- ...
-- ...
+- Created the repository scaffolding and package layout required by the SQLPilot architecture.
+- Added `requirements.txt`, environment config, and a minimal `.gitignore`/`README.md`.
+- Implemented a working `app.py` foundation with a Streamlit UI shell and configuration loading.
+- Added a basic pytest import smoke test for the initial project structure.
 
 Verification:
-- ...
-- ...
+- `pytest` passed: `1 passed in 3.37s`
+- Streamlit app started successfully on `http://localhost:8501` in headless mode.
 
 Date:
+2026-10-02
+
+## Phase 1 — Database Connection Layer
+
+Status: COMPLETED
+
+Completed:
+- Added `database/connection.py` to create and validate SQLAlchemy engines from environment or explicit URLs.
+- Added read-only PostgreSQL connection handling and connection-error reporting.
+- Added `database/safety.py` to reject dangerous SQL statements before execution.
+- Added `database/executor.py` for executing read-only queries safely.
+- Extended the Streamlit UI with a minimal database URL input and connection status behavior.
+
+Verification:
+- `pytest` passed: `5 passed in 3.03s`
+- Streamlit app started successfully on `http://localhost:8502` in headless mode.
+
+Date:
+2026-10-02
+
+## Phase 2 — Database Understanding
+
+Status: COMPLETED
+
+Completed:
+- Added `database/schema_inspector.py` to inspect tables, columns, primary keys, and relationship metadata deterministically.
+- Added `tools/schema_tools.py` as the public schema-inspection API for the app and future agent usage.
+- Exported the schema inspection functions from the database and tools packages.
+- Added SQLite-backed verification tests for table inspection and relationship mapping.
+
+Verification:
+- `pytest` passed: `8 passed in 2.74s`
+- Streamlit app started successfully on `http://localhost:8504` in headless mode.
+
+Date:
+2026-10-02
+
+## Phase 3 — SQL Generation + Safety
+
+Status: COMPLETED
+
+Completed:
+- Added `tools/query_tools.py` with deterministic query generation for common business questions.
+- Hardened `database/safety.py` to block destructive and write-oriented SQL before execution.
+- Added `database/executor.py` structured execution output with success/error payloads and query limits.
+- Added `models/structured_outputs.py` to standardize execution result payloads.
+- Added verification tests for safe SELECT generation, validation, and structured execution.
+
+Verification:
+- `pytest` passed: `12 passed in 3.34s`
+- Streamlit app started successfully on `http://localhost:8505` in headless mode.
+
+Date:
+2026-10-02
+
+## Phase 4 — First Working Agent
+
+Status: COMPLETED
+
+Completed:
+- Added the Phase 4 agent package under `agent/` with typed state, graph compilation, node execution, and router scaffolding.
+- Implemented a minimal end-to-end LangGraph flow: inspect schema → generate SQL → execute query → answer user.
+- Wired the Streamlit UI to run the agent when a database is connected and a natural-language question is submitted.
+- Added a regression test covering a real SQLite-backed question-answer workflow.
+
+Verification:
+- `pytest` passed: `13 passed in 3.85s`
+- Streamlit app started successfully on `http://localhost:8506` in headless mode.
+
+Date:
+2026-10-02
+
+## Phase 5 — Dynamic Agent Loop
+
+Status: COMPLETED
+
+Completed:
+- Reworked the agent router to branch on the question type and current evidence instead of following a single fixed execution path.
+- Added a follow-up investigation node for decline-style questions so the agent can continue querying when the first result is only partial evidence.
+- Fixed the recursive loop caused by a route that always fell through to another SQL execution.
+- Added a regression test proving that a question like “Why did revenue decrease…” triggers multiple SQL steps and a dynamic continuation path.
+
+Verification:
+- `pytest` passed: `14 passed in 4.51s`
+- Streamlit app started successfully on `http://localhost:8507` in headless mode.
+
+Date:
+2026-10-02
+
+## Phase 6 — Clarification / Human-in-the-Loop
+
+Status: COMPLETED
+
+Completed:
+- Added ambiguous-term detection for phrases such as “best customers” and “best product”.
+- Implemented a structured clarification response containing a human-readable question and targeted answer options.
+- Wired the Streamlit UI to pause analysis, prompt the user for the interpretation, and resume the investigation with the clarified intent.
+- Added a regression test covering an ambiguous user question.
+
+Verification:
+- `pytest` passed: `15 passed in 5.83s`
+- Streamlit app started successfully on `http://localhost:8508` in headless mode.
+
+Date:
+2026-10-02
+
+Verification:
+- `pytest` passed: `12 passed in 3.34s`
+- Streamlit app started successfully on `http://localhost:8505` in headless mode.
+
+Date:
+2026-10-02
 ```
 
 Do not mark a phase completed until its completion criteria from `phase.md` have been satisfied.
@@ -236,17 +349,17 @@ Read-only enforcement:
 
 Maintain the actual tool inventory.
 
-| Tool | Status | Purpose | Notes |
-|---|---|---|---|
-| `inspect_database()` | | | |
-| `inspect_table()` | | | |
-| `inspect_relationships()` | | | |
-| `generate_query()` | | | |
-| `execute_query()` | | | |
-| `analyze_results()` | | | |
-| `compare_periods()` | | | |
-| `ask_clarification()` | | | |
-| `create_chart()` | | | |
+| Tool                      | Status | Purpose | Notes |
+| ------------------------- | ------ | ------- | ----- |
+| `inspect_database()`      |        |         |       |
+| `inspect_table()`         |        |         |       |
+| `inspect_relationships()` |        |         |       |
+| `generate_query()`        |        |         |       |
+| `execute_query()`         |        |         |       |
+| `analyze_results()`       |        |         |       |
+| `compare_periods()`       |        |         |       |
+| `ask_clarification()`     |        |         |       |
+| `create_chart()`          |        |         |       |
 
 Only list a tool as implemented when it actually exists and works.
 
@@ -547,21 +660,21 @@ and add a short note when necessary.
 
 Track the MVP requirements from `PRD.md` and `phase.md`.
 
-| Capability | Status | Notes |
-|---|---|---|
-| PostgreSQL connection | | |
-| Schema understanding | | |
-| Ambiguity detection | | |
-| Clarification | | |
-| Tool selection | | |
-| SQL generation | | |
-| SQL safety | | |
-| SQL execution | | |
-| Result inspection | | |
-| Additional investigation | | |
-| Final answer | | |
-| Evidence trail | | |
-| Basic visualization | | |
+| Capability               | Status | Notes |
+| ------------------------ | ------ | ----- |
+| PostgreSQL connection    |        |       |
+| Schema understanding     |        |       |
+| Ambiguity detection      |        |       |
+| Clarification            |        |       |
+| Tool selection           |        |       |
+| SQL generation           |        |       |
+| SQL safety               |        |       |
+| SQL execution            |        |       |
+| Result inspection        |        |       |
+| Additional investigation |        |       |
+| Final answer             |        |       |
+| Evidence trail           |        |       |
+| Basic visualization      |        |       |
 
 The MVP is complete only when the relevant acceptance criteria in `phase.md` are complete.
 
